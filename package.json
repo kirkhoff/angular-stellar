@@ -6,7 +6,7 @@
   "main": "angular-stellar.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy": "lsc -c misc/gh-pages.ls && node misc/gh-pages.js"
+    "deploy": "npm i -q && node_modules/.bin/lsc -c misc/gh-pages.ls && node misc/gh-pages.js"
   },
   "repository": {
     "type": "git",
