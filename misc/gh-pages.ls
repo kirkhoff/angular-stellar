@@ -1,5 +1,9 @@
 require 'shelljs/global'
-
+#
+# Create gh-pages with this:
+# http://stackoverflow.com/a/8815361/1458162
+#
+#
 const REV = exec 'git describe --always' .output.trim!
 const SRC_DIR = 'demo/'
 const OTHERS = 'misc/gh-pages/*'
