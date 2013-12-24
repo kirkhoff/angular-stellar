@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html ng-app="demo">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0;">
+    <title>Mobile Parallax with Angular-Stellar - Demo</title>
+    <link rel="stylesheet" type="text/css" href="./style.css">
+    <script></script>
+  </head>
+  <body>
+    <div id="wrapper">
+      <div id="scroller">
+        <h1>Stellar.js</h1>
+        <h2>Mobile Parallax Demo</h2>
+        <p>Scroll down to see Stellar.js in action.</p>
+        <section>
+          <div data-stellar-ratio="1.1" class="pixel"></div>
+          <div data-stellar-ratio="1.2" class="pixel"></div>
+          <div data-stellar-ratio="1.3" class="pixel"></div>
+          <div data-stellar-ratio="1.4" class="pixel"></div>
+          <div data-stellar-ratio="1.5" class="pixel"></div>
+          <div data-stellar-ratio="1.6" class="pixel"></div>
+          <div data-stellar-ratio="1.7" class="pixel"></div>
+          <div data-stellar-ratio="1.8" class="pixel"></div>
+          <div data-stellar-ratio="1.9" class="pixel"></div>
+          <div data-stellar-ratio="2.0" class="pixel"></div>
+        </section>
+      </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.6/angular.min.js"></script>
+    <script src="../position.js"></script>
+    <script src="../angular-stellar.js"></script>
+    <script>
+      angular.module('demo', ['angular.stellar']).config(['stellarConfig', function(stellarConfig){
+        stellarConfig.horizontalScrolling = false;
+        stellarConfig.verticalOffset = 150;
+        console.log(stellarConfig);
+      }]);
+    </script>
+  </body>
+</html>
