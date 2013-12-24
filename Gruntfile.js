@@ -7,7 +7,9 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
     fdr: {
       src:    'src/',
-      dest:   './'
+      dest:   './',
+      demo: 'demo/',
+      tmp: 'tmp/'
     },
     banner: '' +
       '/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - <%= grunt.template.today("yyyy-mm-dd") %>\n' +
@@ -33,6 +35,12 @@ module.exports = function(grunt) {
         src: '<%= pkg.name %>*.js',
         dest: 'vendor/assets/javascripts/',
         filter: 'isFile'
+      },    demo: {
+        expand: true,
+        cwd: '<%= fdr.dest %>',
+        src: '<%= pkg.name %>.js',
+        dest: '<%= fdr.demo %>',
+        filter: 'isFile'
       }
     }
   });
@@ -41,5 +49,5 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-copy');
   //
-  grunt.registerTask('default', ['livescript:compile', 'uglify:compile', 'copy:rubygem'])
+  grunt.registerTask('default', ['livescript:compile', 'uglify:compile', 'copy'])
 };
