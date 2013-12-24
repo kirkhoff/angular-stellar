@@ -286,10 +286,12 @@
         }
       },
       requestFrame: function(callback, targetName){
-        var target;
+        var target, unregisterCallback;
         targetName || (targetName = 'window');
         target = Target[targetName] || new Target(targetName);
-        return target.addCallbak(callback);
+        unregisterCallback = target.addCallbak(callback);
+        handleScrollResize();
+        return unregisterCallback;
       }
     };
   });
@@ -306,8 +308,8 @@
       link: function($scope, $element, $attrs){
         var finalRatio, verticalOffset, horizontalOffset, selfProperties, parentProperties;
         finalRatio = computeRatio($element, $attrs);
-        verticalOffset = $attrs.stellarVerticalOffset || 0;
-        horizontalOffset = $attrs.stellarHorizontalOffset || 0;
+        verticalOffset = $attrs.stellarVerticalOffset || stellarConfig.verticalOffset;
+        horizontalOffset = $attrs.stellarHorizontalOffset || stellarConfig.horizontalOffset;
         selfProperties = stellarAccessors.get($element);
         parentProperties = {
           offsetTop: 0,
@@ -342,8 +344,8 @@
         var isFixed, finalRatio, verticalOffset, horizontalOffset, selfProperties, parentProperties;
         isFixed = computeIsFixed($element);
         finalRatio = -1 * computeRatio($element, $attrs);
-        verticalOffset = $attrs.stellarVerticalOffset || 0;
-        horizontalOffset = $attrs.stellarHorizontalOffset || 0;
+        verticalOffset = $attrs.stellarVerticalOffset || stellarConfig.verticalOffset;
+        horizontalOffset = $attrs.stellarHorizontalOffset || stellarConfig.horizontalOffset;
         selfProperties = stellarAccessors.get($element);
         parentProperties = {
           offsetTop: 0,

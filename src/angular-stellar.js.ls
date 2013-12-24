@@ -217,7 +217,9 @@ const stellarAccessors = <[
   #
   requestFrame: (callback, targetName or 'window') ->
     const target = Target[targetName] or new Target targetName
-    target.addCallbak callback
+    const unregisterCallback = target.addCallbak callback
+    handleScrollResize!# invoke
+    unregisterCallback
 
 const stellarBackgroundRatio = <[
        $window  $document  $css  stellarAccessors
@@ -237,8 +239,8 @@ const stellarBackgroundRatio = <[
   #
   link: !($scope, $element, $attrs) ->
     const finalRatio        = computeRatio $element, $attrs
-    const verticalOffset    = $attrs.stellarVerticalOffset or 0
-    const horizontalOffset  = $attrs.stellarHorizontalOffset or 0
+    const verticalOffset    = $attrs.stellarVerticalOffset or stellarConfig.verticalOffset
+    const horizontalOffset  = $attrs.stellarHorizontalOffset or stellarConfig.horizontalOffset
     const selfProperties    = stellarAccessors.get $element
     const parentProperties  = offsetTop: 0, offsetLeft: 0
     #
@@ -283,8 +285,8 @@ const stellarRatio = <[
   link: !($scope, $element, $attrs) ->
     const isFixed           = computeIsFixed $element
     const finalRatio        = -1*computeRatio $element, $attrs
-    const verticalOffset    = $attrs.stellarVerticalOffset or 0
-    const horizontalOffset  = $attrs.stellarHorizontalOffset or 0
+    const verticalOffset    = $attrs.stellarVerticalOffset or stellarConfig.verticalOffset
+    const horizontalOffset  = $attrs.stellarHorizontalOffset or stellarConfig.horizontalOffset
     const selfProperties    = stellarAccessors.get $element
     const parentProperties  = offsetTop: 0, offsetLeft: 0
     #
