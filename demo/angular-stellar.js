@@ -1,5 +1,5 @@
 (function(){
-  var bind, noop, element, extend, equals, isDefined, $requestAnimationFrame, $css, stellarConfig, Target, stellarAccessors, stellarBackgroundRatio, stellarRatio;
+  var bind, noop, element, extend, equals, isDefined, $requestAnimationFrame, $css, stellarConfig, Target, stellarAccessors, stellarBackgroundRatio, stellarRatio, toString$ = {}.toString;
   bind = angular.bind, noop = angular.noop, element = angular.element, extend = angular.extend, equals = angular.equals, isDefined = angular.isDefined;
   $requestAnimationFrame = ['$window', '$log'].concat(function($window, $log){
     var NAMES, i$, len$, name, that;
@@ -144,32 +144,17 @@
         positionProperty.setTop($element, top + "px", startingTop + "px");
       }
     };
-    bgPosAdapter = isDefined(
-    element('<div style="background:#fff;"/>').css('background-position-x'))
-      ? {
-        get: function($element){
-          var error;
-          try {
-            return [$css.toInt($element, 'background-position-x'), $css.toInt($element, 'background-position-y')];
-          } catch (e$) {
-            error = e$;
-            return [0, 0];
-          }
-        },
-        set: function($element, x, y){
-          $element.css('background-position', x + "px " + y + "px");
-        }
+    bgPosAdapter = {
+      get: function($element){
+        var bgPos;
+        console.log(toString$.call($css).slice(8, -1), toString$.call($css.adapter).slice(8, -1), $css.adapter($element, 'background-position'));
+        bgPos = $css.adapter($element, 'background-position').split(' ');
+        return [parseInt(bgPos[0]), parseInt(bgPos[1])];
+      },
+      set: function($element, x, y){
+        $element.css('background-position', x + " " + y);
       }
-      : {
-        get: function($element){
-          var bgPos;
-          bgPos = $css.adapter($element, 'background-position').split(' ');
-          return [parseInt(bgPos[0]), parseInt(bgPos[1])];
-        },
-        set: function($element, x, y){
-          $element.css('background-position', x + " " + y);
-        }
-      };
+    };
     canCastToWindow = function($element){
       return $window === $element[0] || 9 === $element.prop('nodeType');
     };

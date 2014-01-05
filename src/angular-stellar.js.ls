@@ -121,20 +121,9 @@ const stellarAccessors = <[
     if stellarConfig.verticalScrolling
       positionProperty.setTop $element, "#{top}px", "#{startingTop}px"
 
-  const bgPosAdapter = if element '<div style="background:#fff;"/>' .css 'background-position-x' |> isDefined
+  const bgPosAdapter = do
     get: ($element) ->
-      try
-        [
-          $css.toInt $element, 'background-position-x'
-          $css.toInt $element, 'background-position-y'
-        ]
-      catch error
-        [0, 0]
-
-    set: !($element, x, y) ->
-      $element.css 'background-position', "#{ x }px #{ y }px"
-  else
-    get: ($element) ->
+      console.log typeof! $css, typeof! $css.adapter, $css.adapter($element, 'background-position')
       const bgPos = $css.adapter $element, 'background-position' .split ' '
       [parseInt(bgPos.0), parseInt(bgPos.1)]
     set: !($element, x, y) ->

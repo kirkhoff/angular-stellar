@@ -1,5 +1,12 @@
 /*global module:false*/
 module.exports = function(grunt) {
+  // These plugins provide necessary tasks.
+  grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-karma');
+  
+  grunt.loadNpmTasks('grunt-livescript');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-contrib-copy');
   // Project configuration.
   /*jshint scripturl:true*/
   grunt.initConfig({
@@ -18,7 +25,23 @@ module.exports = function(grunt) {
       ' * Licensed [<%= pkg.license.type %>](<%= pkg.license.url %>)\n' +
       ' */\n',
     // Task configuration.
-    livescript: { compile: {
+    delta: {
+      ls: {
+        files: ['<%= fdr.src %><%= pkg.name %>.*.ls'],
+        tasks: ['livescript:watch']
+      },
+      js: {
+        files: ['<%= fdr.tmp %><%= pkg.name %>.*.ls'],
+        tasks: ['karma:watch:run']
+      }
+    },
+    livescript: { watch: {
+        expand: true,
+        cwd: '<%= fdr.src %>',
+        src: '<%= pkg.name %>.*.ls',
+        dest: '<%= fdr.tmp %>',
+        filter: 'isFile'
+      },          compile: {
         src: '<%= fdr.src %><%= pkg.name %>.js.ls',
         dest: '<%= fdr.dest %><%= pkg.name %>.js'
       }
@@ -32,7 +55,7 @@ module.exports = function(grunt) {
     copy: { rubygem: {
         expand: true,
         cwd: '<%= fdr.dest %>',
-        src: '<%= pkg.name %>*.js',
+        src: '<%= pkg.name %>.js',
         dest: 'vendor/assets/javascripts/',
         filter: 'isFile'
       },    demo: {
@@ -42,12 +65,39 @@ module.exports = function(grunt) {
         dest: '<%= fdr.demo %>',
         filter: 'isFile'
       }
-    }
+    },
+    karma: {
+      options: {
+        frameworks: ['jasmine'],
+        files: [
+          'misc/test-lib/jquery-1.10.2.min.js',
+          'misc/test-lib/angular.1.2.6.min.js',
+          'misc/test-lib/angular-mocks.1.2.6.min.js',
+          '<%= fdr.tmp %><%= pkg.name %>.js.ls',
+          '<%= fdr.tmp %><%= pkg.name %>.spec.ls'
+        ],
+        browsers: ['Chrome'],
+        port: 9018,
+        runnerPort: 9100,
+        colors: true,
+        autoWatch: false,
+        singleRun: false
+      },
+      watch: {
+        background: true
+      },
+      travis: {
+        singleRun: true,
+        browsers: ['Firefox']
+      },
+      continuous: {
+        singleRun: true
+      }
+    },
   });
-  // These plugins provide necessary tasks.
-  grunt.loadNpmTasks('grunt-livescript');
-  grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-contrib-copy');
+  //
+  grunt.renameTask('watch', 'delta');
+  grunt.registerTask('watch', ['livescript:watch', 'karma:watch', 'delta']);
   //
   grunt.registerTask('default', ['livescript:compile', 'uglify:compile', 'copy'])
 };
