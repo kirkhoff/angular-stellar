@@ -1,6 +1,7 @@
 (function(){
-  var bind, noop, element, extend, equals, isDefined, $requestAnimationFrame, $css, stellarConfig, Target, stellarAccessors, stellarBackgroundRatio, stellarRatio, toString$ = {}.toString;
-  bind = angular.bind, noop = angular.noop, element = angular.element, extend = angular.extend, equals = angular.equals, isDefined = angular.isDefined;
+  var bind, noop, element, extend, delayInFPS, $requestAnimationFrame, stellarConfig, Target, $css, stellarTarget, stellarBackgroundRatio, stellarRatio;
+  bind = angular.bind, noop = angular.noop, element = angular.element, extend = angular.extend;
+  delayInFPS = 1000 / 60;
   $requestAnimationFrame = ['$window', '$log'].concat(function($window, $log){
     var NAMES, i$, len$, name, that;
     NAMES = ['request', 'webkitRequest', 'mozRequest', 'oRequest', 'msRequest'];
@@ -12,26 +13,7 @@
     }
     $log.warn('Can\'t find requestAnimationFrame in your browser. Use polyfill.');
     return function(it){
-      return $window.setTimeout(it, 1000 / 60);
-    };
-  });
-  $css = ['$window'].concat(function($window){
-    return {
-      adapter: function($element, cssprop){
-        var el;
-        el = $element[0];
-        if (el.currentStyle) {
-          return el.currentStyle[cssprop];
-        } else if ($window.getComputedStyle) {
-          return $window.getComputedStyle(el)[cssprop];
-        } else {
-          return el.style[cssprop];
-        }
-      },
-      toInt: function($element, cssprop, defaultValue){
-        defaultValue || (defaultValue = 0);
-        return parseInt(this.adapter($element, cssprop), 10) || defaultValue;
-      }
+      return $window.setTimeout(it, delayInFPS);
     };
   });
   stellarConfig = {
@@ -58,28 +40,35 @@
   Target = (function(){
     Target.displayName = 'Target';
     var prototype = Target.prototype, constructor = Target;
-    function Target(name, dom){
-      constructor[name] = this;
-      this._$element = element(dom);
-      this._callbacks = [];
-      this._props = {};
-      this._lastTime = 0;
-    }
-    prototype.isJustUpdated = function(timestamp){
-      var justUpdated;
-      justUpdated = timestamp - this._lastTime < 1000 / 60;
+    Target._lastTime = 0;
+    Target.handleUpdate = function(timestamp){
+      var justUpdated, rescheduled, name, target;
+      justUpdated = timestamp - this._lastTime < delayInFPS;
       if (justUpdated) {
         return true;
       }
       this._lastTime = timestamp;
-      return false;
+      rescheduled = false;
+      for (name in this) {
+        target = this[name];
+        if ((typeof target.handleUpdate === 'function' && target.handleUpdate(timestamp)) && !rescheduled) {
+          rescheduled = true;
+        }
+      }
+      return rescheduled;
     };
+    function Target(dom){
+      this._$element = element(
+      dom);
+      this._callbacks = [];
+      this._props = {};
+    }
     prototype.isPropChanged = function(){
       var updated;
       updated = this.getOffset();
       updated.scrollTop = this.getTop();
       updated.scrollLeft = this.getLeft();
-      if (equals(updated, this._props)) {
+      if (angular.equals(updated, this._props)) {
         return false;
       }
       extend(this._props, updated);
@@ -92,9 +81,6 @@
     };
     prototype.handleUpdate = function(timestamp){
       var i$, ref$, len$, callback;
-      if (this.isJustUpdated(timestamp)) {
-        return true;
-      }
       if (!this.isPropChanged()) {
         return;
       }
@@ -111,211 +97,187 @@
       this.setTop(scrollTop);
       this.setLeft(scrollLeft);
     };
-    prototype.getLeft = noop;
-    prototype.setLeft = noop;
-    prototype.getTop = noop;
-    prototype.setTop = noop;
+    prototype.getLeft = function(){
+      return this._$element.prop('scrollLeft');
+    };
+    prototype.setLeft = function(it){
+      this._$element.prop('scrollLeft', it);
+    };
+    prototype.getTop = function(){
+      return this._$element.prop('scrollTop');
+    };
+    prototype.setTop = function(it){
+      this._$element.prop('scrollTop', it);
+    };
     return Target;
   }());
-  stellarAccessors = ['$window', '$position', '$requestAnimationFrame', '$css', 'stellarConfig'].concat(function($window, $position, $requestAnimationFrame, $css, stellarConfig){
-    var positionProperty, positionAdapter, bgPosAdapter, canCastToWindow, scrollAccessors, update, handleScrollResize, x$;
-    positionProperty = (function(){
-      switch (stellarConfig.positionProperty) {
-      case 'position':
-        return {
-          setTop: function($element, top){
-            $element.css('top', top);
-          },
-          setLeft: function($element, left){
-            $element.css('left', left);
-          }
-        };
-      case 'transform':
-        throw Error('unimplemented');
-      default:
-        return stellarConfig.positionProperty;
-      }
-    }());
-    positionAdapter = positionProperty.setPosition || function($element, left, startingLeft, top, startingTop){
-      if (stellarConfig.horizontalScrolling) {
-        positionProperty.setLeft($element, left + "px", startingLeft + "px");
-      }
-      if (stellarConfig.verticalScrolling) {
-        positionProperty.setTop($element, top + "px", startingTop + "px");
-      }
-    };
-    bgPosAdapter = {
-      get: function($element){
-        var bgPos;
-        console.log(toString$.call($css).slice(8, -1), toString$.call($css.adapter).slice(8, -1), $css.adapter($element, 'background-position'));
-        bgPos = $css.adapter($element, 'background-position').split(' ');
-        return [parseInt(bgPos[0]), parseInt(bgPos[1])];
-      },
-      set: function($element, x, y){
-        $element.css('background-position', x + " " + y);
-      }
-    };
-    canCastToWindow = function($element){
-      return $window === $element[0] || 9 === $element.prop('nodeType');
-    };
-    scrollAccessors = (function(){
-      switch (stellarConfig.scrollProperty) {
-      case 'scroll':
-        return {
-          getLeft: function(){
-            return this._$element.prop('scrollLeft') || $window.pageXOffset;
-          },
-          getTop: function(){
-            return this._$element.prop('scrollTop') || $window.pageYOffset;
-          },
-          setLeft: function(it){
-            if (canCastToWindow(this._$element)) {
-              $window.scrollTo(it, $window.pageYOffset);
-            } else {
-              this._$element.prop('scrollLeft', it);
-            }
-          },
-          setTop: function(it){
-            if (canCastToWindow(this._$element)) {
-              $window.scrollTo($window.pageXOffset, it);
-            } else {
-              this._$element.prop('scrollTop', it);
-            }
-          }
-        };
-      case 'position':
-        return {
-          getLeft: function(){
-            return -1 * $css.toInt(this._$element, 'left');
-          },
-          getTop: function(){
-            return -1 * $css.toInt(this._$element, 'top');
-          }
-        };
-      case 'margin':
-        return {
-          getLeft: function(){
-            return -1 * $css.toInt(this._$element, 'margin-left');
-          },
-          getTop: function(){
-            return -1 * $css.toInt(this._$element, 'margin-top');
-          }
-        };
-      case 'transform':
-        throw Error('unimplemented');
-      default:
-        return stellarConfig.scrollProperty;
-      }
-    }());
-    extend(Target.prototype, {
-      getOffset: function(){
-        var offset, ref$;
-        offset = $position.offset(this._$element);
-        offset.offsetTop = (ref$ = offset.top, delete offset.top, ref$);
-        offset.offsetLeft = (ref$ = offset.left, delete offset.left, ref$);
-        return offset;
-      }
-    }, scrollAccessors);
-    update = function(timestamp){
-      var rescheduled, name, ref$, target;
-      rescheduled = false;
-      for (name in ref$ = Target) {
-        target = ref$[name];
-        if ((typeof target.handleUpdate === 'function' && target.handleUpdate(timestamp)) && !rescheduled) {
-          rescheduled = true;
-          handleScrollResize();
-        }
-      }
-    };
-    handleScrollResize = function(){
-      $requestAnimationFrame(update);
-    };
-    x$ = new Target('window', $window);
-    x$._$element.on('scroll resize', handleScrollResize);
-    x$.getOffset = function(){
-      var docEl;
-      docEl = $window.document.documentElement;
-      return {
-        height: docEl.clientHeight,
-        width: docEl.clientWidth,
-        offsetTop: 0,
-        offsetLeft: 0
-      };
-    };
-    if (/WebKit/.test($window.navigator.userAgent)) {
-      x$._$element.on('load', bind(x$, x$.handleWebkitBug));
-    }
-    return {
-      get: function($element){
-        var positions, offsets, bgPositions;
-        positions = $position.position($element);
-        offsets = $position.offset($element);
-        bgPositions = bgPosAdapter.get($element);
-        return {
-          height: positions.height,
-          width: positions.width,
-          positionTop: positions.top,
-          positionLeft: positions.left,
-          offsetTop: (offsets != null ? offsets.top : void 8) || 0,
-          offsetLeft: (offsets != null ? offsets.left : void 8) || 0,
-          bgTop: bgPositions[1],
-          bgLeft: bgPositions[0]
-        };
-      },
-      set: function($element, styles){
-        if (isDefined(styles.bgTop) && isDefined(styles.bgLeft)) {
-          bgPosAdapter.set($element, styles.bgLeft, styles.bgTop);
-        }
-        if (isDefined(styles.positionTop) && isDefined(styles.positionLeft)) {
-          positionAdapter($element, styles.positionLeft, styles.startingLeft, styles.positionTop, styles.startingTop);
-        }
-      },
-      requestFrame: function(callback, targetName){
-        var target, unregisterCallback;
-        targetName || (targetName = 'window');
-        target = Target[targetName] || new Target(targetName);
-        unregisterCallback = target.addCallbak(callback);
-        handleScrollResize();
-        return unregisterCallback;
+  $css = ['$window'].concat(function($window){
+    return function($element, cssprop){
+      var el;
+      el = $element[0];
+      if (el.currentStyle) {
+        return el.currentStyle[cssprop];
+      } else if ($window.getComputedStyle) {
+        return $window.getComputedStyle(el)[cssprop];
+      } else {
+        return el.style[cssprop];
       }
     };
   });
-  stellarBackgroundRatio = ['$window', '$document', '$css', 'stellarAccessors'].concat(function($window, $document, $css, stellarAccessors){
-    var computeRatio;
+  stellarTarget = ['$window', '$document', '$position', '$requestAnimationFrame', '$css', 'stellarConfig'].concat(function($window, $document, $position, $requestAnimationFrame, $css, stellarConfig){
+    var windowTarget, documentTarget, windowScheduled, scrollProperty, updateFn, schedule;
+    windowTarget = Target.window = new Target($window);
+    documentTarget = Target.document = new Target($document);
+    windowScheduled = false;
+    windowTarget.getOffset = documentTarget.getOffset = function(){
+      var docEl;
+      docEl = $document[0].documentElement;
+      return {
+        height: docEl.clientHeight,
+        width: docEl.clientWidth,
+        top: 0,
+        left: 0
+      };
+    };
+    windowTarget.getLeft = documentTarget.getLeft = function(){
+      return $window.pageXOffset;
+    };
+    windowTarget.getTop = documentTarget.getTop = function(){
+      return $window.pageYOffset;
+    };
+    windowTarget.setLeft = documentTarget.setLeft = function(it){
+      $window.scrollTo(it, $window.pageYOffset);
+    };
+    windowTarget.setTop = documentTarget.setLeft = function(it){
+      $window.scrollTo($window.pageXOffset, it);
+    };
+    scrollProperty = stellarConfig.scrollProperty;
+    updateFn = function(timestamp){
+      Target.handleUpdate(timestamp);
+      schedule();
+    };
+    extend(Target.prototype, {
+      getOffset: function(){
+        return $position.offset(this._$element);
+      }
+    }, angular.isObject(scrollProperty)
+      ? scrollProperty
+      : function(){
+        var cssInt;
+        cssInt = function($element, cssprop){
+          return parseInt($css($element, cssprop), 10);
+        };
+        switch (scrollProperty) {
+        case 'scroll':
+          updateFn = function(timestamp){
+            if (Target.handleUpdate(timestamp)) {
+              schedule();
+            }
+          };
+          return {};
+        case 'position':
+          return {
+            getLeft: function(){
+              return -1 * cssInt(this._$element, 'left');
+            },
+            getTop: function(){
+              return -1 * cssInt(this._$element, 'top');
+            }
+          };
+        case 'margin':
+          return {
+            getLeft: function(){
+              return -1 * cssInt(this._$element, 'marginLeft');
+            },
+            getTop: function(){
+              return -1 * cssInt(this._$element, 'marginTop');
+            }
+          };
+        case 'transform':
+          throw Error('unimplemented');
+        default:
+          throw Error('unimplemented');
+        }
+      }());
+    schedule = bind(this, $requestAnimationFrame, updateFn);
+    return function(name, $element){
+      schedule();
+      if (scrollProperty === 'scroll' && !windowScheduled) {
+        windowScheduled = true;
+        angular.element($window).on('scroll resize', schedule);
+      }
+      return Target[name] || (Target[name] = new Target($element));
+    };
+  });
+  stellarBackgroundRatio = ['$window', '$position', '$css', 'stellarTarget'].concat(function($window, $position, $css, stellarTarget){
+    var getBackgroundPosition, computeRatio;
+    getBackgroundPosition = function($element){
+      var bgPos;
+      bgPos = $css($element, 'backgroundPosition').split(' ');
+      return [parseInt(bgPos[0]), parseInt(bgPos[1])];
+    };
     computeRatio = function($element, $attrs){
       var stellarBackgroundRatio, fixedRatioOffset;
       stellarBackgroundRatio = $attrs.stellarBackgroundRatio || 1;
-      fixedRatioOffset = 'fixed' === $css.adapter($element, 'background-attachment') ? 0 : 1;
+      fixedRatioOffset = 'fixed' === $css($element, 'backgroundAttachment') ? 0 : 1;
       return fixedRatioOffset - stellarBackgroundRatio;
     };
     return {
       restrict: 'A',
       link: function($scope, $element, $attrs){
-        var finalRatio, verticalOffset, horizontalOffset, selfProperties, parentProperties;
+        var finalRatio, verticalOffset, horizontalOffset, selfProperties, selfBgPositions, parentProperties;
         finalRatio = computeRatio($element, $attrs);
         verticalOffset = $attrs.stellarVerticalOffset || stellarConfig.verticalOffset;
         horizontalOffset = $attrs.stellarHorizontalOffset || stellarConfig.horizontalOffset;
-        selfProperties = stellarAccessors.get($element);
+        selfProperties = $position.offset($element);
+        selfBgPositions = getBackgroundPosition($element);
         parentProperties = {
-          offsetTop: 0,
-          offsetLeft: 0
+          top: 0,
+          left: 0
         };
-        $scope.$on('$destroy', stellarAccessors.requestFrame(function(targetProps){
+        selfProperties.bgTop = selfBgPositions[1];
+        selfProperties.bgLeft = selfBgPositions[0];
+        $scope.$on('$destroy', stellarTarget('window', $window).addCallbak(function(targetProps){
           var bgTop, bgLeft;
-          bgTop = finalRatio * (targetProps.scrollTop + verticalOffset - targetProps.offsetTop - selfProperties.offsetTop + parentProperties.offsetTop - selfProperties.bgTop);
-          bgLeft = finalRatio * (targetProps.scrollLeft + horizontalOffset - targetProps.offsetLeft - selfProperties.offsetLeft + parentProperties.offsetLeft - selfProperties.bgLeft);
-          stellarAccessors.set($element, {
-            bgTop: bgTop,
-            bgLeft: bgLeft
-          });
+          bgTop = finalRatio * (targetProps.scrollTop + verticalOffset - targetProps.top - selfProperties.top + parentProperties.top - selfProperties.bgTop);
+          bgLeft = finalRatio * (targetProps.scrollLeft + horizontalOffset - targetProps.left - selfProperties.left + parentProperties.left - selfProperties.bgLeft);
+          $element.css('background-position', bgLeft + "px " + bgTop + "px");
         }));
       }
     };
   });
-  stellarRatio = ['$window', '$document', '$css', 'stellarAccessors', 'stellarConfig'].concat(function($window, $document, $css, stellarAccessors, stellarConfig){
-    var computeIsFixed, computeRatio;
+  stellarRatio = ['$window', '$css', '$position', 'stellarConfig', 'stellarTarget'].concat(function($window, $css, $position, stellarConfig, stellarTarget){
+    var positionProperty, horizontalScrolling, verticalScrolling, setPosition, computeIsFixed, computeRatio;
+    positionProperty = stellarConfig.positionProperty, horizontalScrolling = stellarConfig.horizontalScrolling, verticalScrolling = stellarConfig.verticalScrolling;
+    setPosition = angular.isFunction(positionProperty.setPosition)
+      ? positionProperty.setPosition
+      : function(){
+        var setTop, setLeft;
+        switch (positionProperty) {
+        case 'position':
+          setTop = function($element, top){
+            $element.css('top', top);
+          };
+          setLeft = function($element, left){
+            $element.css('left', left);
+          };
+          break;
+        case 'transform':
+          throw Error('unimplemented');
+        default:
+          throw Error('unimplemented');
+        }
+        return function($element, left, startingLeft, top, startingTop){
+          if (horizontalScrolling) {
+            setLeft($element, left + "px", startingLeft + "px");
+          }
+          if (verticalScrolling) {
+            setTop($element, top + "px", startingTop + "px");
+          }
+        };
+      }();
     computeIsFixed = function($element){
-      return 'fixed' === $css.adapter($element, 'position');
+      return 'fixed' === $css($element, 'position');
     };
     computeRatio = function($element, $attrs){
       var stellarRatio, fixedRatioOffset;
@@ -326,28 +288,31 @@
     return {
       restrict: 'A',
       link: function($scope, $element, $attrs){
-        var isFixed, finalRatio, verticalOffset, horizontalOffset, selfProperties, parentProperties;
+        var isFixed, finalRatio, verticalOffset, horizontalOffset, selfProperties, selfPositions, parentProperties;
         isFixed = computeIsFixed($element);
         finalRatio = -1 * computeRatio($element, $attrs);
         verticalOffset = $attrs.stellarVerticalOffset || stellarConfig.verticalOffset;
         horizontalOffset = $attrs.stellarHorizontalOffset || stellarConfig.horizontalOffset;
-        selfProperties = stellarAccessors.get($element);
+        selfProperties = $position.offset($element);
+        selfPositions = $position.position($element);
         parentProperties = {
-          offsetTop: 0,
-          offsetLeft: 0
+          top: 0,
+          left: 0
         };
-        $scope.$on('$destroy', stellarAccessors.requestFrame(function(targetProps){
+        selfProperties.positionTop = selfPositions.top;
+        selfProperties.positionLeft = selfPositions.left;
+        $scope.$on('$destroy', stellarTarget('window', $window).addCallbak(function(targetProps){
           var newTop, newOffsetTop, newLeft, newOffsetLeft, targetScrollLeft, targetScrollTop, isVisibleHorizontal, isVisibleVertical, isHidden;
           newTop = selfProperties.positionTop;
-          newOffsetTop = selfProperties.offsetTop;
-          if (stellarConfig.verticalScrolling) {
-            newTop += finalRatio * (targetProps.scrollTop + verticalOffset + targetProps.offsetTop + selfProperties.positionTop - selfProperties.offsetTop + parentProperties.offsetTop);
+          newOffsetTop = selfProperties.top;
+          if (verticalScrolling) {
+            newTop += finalRatio * (targetProps.scrollTop + verticalOffset + targetProps.top + selfProperties.positionTop - selfProperties.top + parentProperties.top);
             newOffsetTop += newTop - selfProperties.positionTop;
           }
           newLeft = selfProperties.positionLeft;
-          newOffsetLeft = selfProperties.offsetLeft;
-          if (stellarConfig.horizontalScrolling) {
-            newLeft += finalRatio * (targetProps.scrollLeft + horizontalOffset + targetProps.offsetLeft + selfProperties.positionLeft - selfProperties.offsetLeft + parentProperties.offsetLeft);
+          newOffsetLeft = selfProperties.left;
+          if (horizontalScrolling) {
+            newLeft += finalRatio * (targetProps.scrollLeft + horizontalOffset + targetProps.left + selfProperties.positionLeft - selfProperties.left + parentProperties.left);
             newOffsetLeft += newLeft - selfProperties.positionLeft;
           }
           if (stellarConfig.hideDistantElements) {
@@ -357,20 +322,15 @@
             targetScrollTop = isFixed
               ? 0
               : targetProps.scrollTop;
-            isVisibleHorizontal = !stellarConfig.horizontalScrolling || (newOffsetLeft + selfProperties.width > targetScrollLeft && newOffsetLeft < targetProps.width + targetProps.offsetLeft + targetScrollLeft);
-            isVisibleVertical = !stellarConfig.verticalScrolling || (newOffsetTop + selfProperties.height > targetScrollTop && newOffsetTop < targetProps.height + targetProps.offsetTop + targetScrollTop);
+            isVisibleHorizontal = !horizontalScrolling || (newOffsetLeft + selfProperties.width > targetScrollLeft && newOffsetLeft < targetProps.width + targetProps.left + targetScrollLeft);
+            isVisibleVertical = !verticalScrolling || (newOffsetTop + selfProperties.height > targetScrollTop && newOffsetTop < targetProps.height + targetProps.top + targetScrollTop);
           }
           isHidden = stellarConfig.isElementHidden($element);
           if (isVisibleHorizontal && isVisibleVertical) {
             if (isHidden) {
               stellarConfig.showElement($element);
             }
-            stellarAccessors.set($element, {
-              positionTop: newTop,
-              positionLeft: newLeft,
-              startingTop: selfProperties.positionTop,
-              startingLeft: selfProperties.positionLeft
-            });
+            setPosition($element, newLeft, selfProperties.positionLeft, newTop, selfProperties.positionTop);
           } else if (!isHidden) {
             stellarConfig.hideElement($element);
           }
@@ -378,5 +338,5 @@
       }
     };
   });
-  angular.module('angular.stellar', ['ui.bootstrap.position']).constant('stellarConfig', stellarConfig).factory('$requestAnimationFrame', $requestAnimationFrame).factory('$css', $css).factory('stellarAccessors', stellarAccessors).directive('stellarRatio', stellarRatio).directive('stellarBackgroundRatio', stellarBackgroundRatio);
+  angular.module('angular.stellar', ['ui.bootstrap.position']).constant('stellarConfig', stellarConfig).factory('$requestAnimationFrame', $requestAnimationFrame).factory('$css', $css).factory('stellarTarget', stellarTarget).directive('stellarRatio', stellarRatio).directive('stellarBackgroundRatio', stellarBackgroundRatio);
 }).call(this);

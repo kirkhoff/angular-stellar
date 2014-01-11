@@ -55,3 +55,8 @@ describe '$requestAnimationFrame' !(...) ->
       $provide.value '$window' mockWindow
 
     it 'should be called back' inject testFn
+
+
+describe 'stellarConfig' !(...) ->
+  beforeEach module !($provide) ->
+    $provide.constant 
