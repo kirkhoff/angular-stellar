@@ -9,7 +9,6 @@ const $requestAnimationFrame = <[
   #
   const NAMES = <[ request webkitRequest mozRequest oRequest msRequest ]>
   for name in NAMES when $window["#{ name }AnimationFrame"]
-    # $log.log "find requestAnimationFrame (#{ name })"
     return bind $window, that
 
   $log.warn 'Can\'t find requestAnimationFrame in your browser. Use polyfill.'
@@ -93,16 +92,31 @@ const $css = <[
   #
   ($element, cssprop) ->
     const el = $element.0
-    if el.currentStyle # IE
-      el.currentStyle[cssprop]
+    const style = if el.currentStyle
+      el.currentStyle # IE
     else if $window.getComputedStyle
-      $window.getComputedStyle(el)[cssprop]
-    else # finally try and get inline style
-      el.style[cssprop]
+      $window.getComputedStyle el
+    else
+      el.style # finally try and get inline style
+
+    if cssprop then style[cssprop] else style
+
+const $vendorPrefix = <[
+       $css
+]> ++ ($css) ->
+  const VENDORS = /^(moz|webkit|khtml|o|ms)(?=[A-Z])/
+
+  for name of $css angular.element('<script></script>') when name.match VENDORS
+    prefix = that.0
+    break
+
+  (cssprop) ->
+    prefix + unless prefix then cssprop
+    else "#{ angular.uppercase cssprop.charAt(0) }#{ cssprop.slice 1 }"
 
 const stellarTarget = <[
-       $window  $document  $position  $requestAnimationFrame  $css  stellarConfig
-]> ++ ($window, $document, $position, $requestAnimationFrame, $css, stellarConfig) ->
+       $window  $document  $position  $requestAnimationFrame  $css  $vendorPrefix  stellarConfig
+]> ++ ($window, $document, $position, $requestAnimationFrame, $css, $vendorPrefix, stellarConfig) ->
 
   const windowTarget    = Target.window   = new Target $window
   const documentTarget  = Target.document = new Target $document
@@ -138,6 +152,7 @@ const stellarTarget = <[
   , if angular.isObject scrollProperty then scrollProperty
   else do ->
     const cssInt = ($element, cssprop) -> parseInt $css($element, cssprop), 10
+    const prefixedTransform = $vendorPrefix 'transform'
     #
     switch scrollProperty
     | 'scroll' =>
@@ -154,7 +169,15 @@ const stellarTarget = <[
       getLeft: -> -1*cssInt @_$element, 'marginLeft'
       getTop: -> -1*cssInt @_$element, 'marginTop'
     | 'transform' =>
-      ...# TODO
+      getLeft: ->
+        const transform = $css @_$element, prefixedTransform
+        if 'none' is transform then 0
+        else -1*parseInt transform.match(/(-?[0-9]+)/g).4, 10
+
+      getTop: ->
+        const transform = $css @_$element, prefixedTransform
+        if 'none' is transform then 0
+        else -1*parseInt transform.match(/(-?[0-9]+)/g).5, 10
     | _ => ...
   #
   const schedule = bind @, $requestAnimationFrame, updateFn
@@ -222,20 +245,22 @@ const stellarBackgroundRatio = <[
     |> $scope.$on '$destroy' _
 
 const stellarRatio = <[
-       $window  $css  $position  stellarConfig  stellarTarget
-]> ++ ($window, $css, $position, stellarConfig, stellarTarget) ->
+       $window  $css  $vendorPrefix  $position  stellarConfig  stellarTarget
+]> ++ ($window, $css, $vendorPrefix, $position, stellarConfig, stellarTarget) ->
 
   const {positionProperty, horizontalScrolling, verticalScrolling} = stellarConfig
 
   const setPosition = if angular.isFunction positionProperty.setPosition
     positionProperty.setPosition
-  else do -> 
+  else do ->
+    const prefixedTransform = $vendorPrefix 'transform'
     switch positionProperty
     | 'position' =>
       setTop = !($element, top) -> $element.css 'top' top
       setLeft = !($element, left) -> $element.css 'left' left
     | 'transform' =>
-      ...# TODO
+      return !($element, left, startingLeft, top, startingTop) ->
+        $element.css prefixedTransform, "translate3d(#{ left - startingLeft }px, #{ top - startingTop }px, 0)"
     | _ => ...
 
     !($element, left, startingLeft, top, startingTop) ->
@@ -324,6 +349,7 @@ angular.module 'angular.stellar' <[
 .constant 'stellarConfig' stellarConfig
 .factory '$requestAnimationFrame' $requestAnimationFrame
 .factory '$css' $css
+.factory '$vendorPrefix' $vendorPrefix
 .factory 'stellarTarget' stellarTarget
 
 .directive 'stellarRatio' stellarRatio

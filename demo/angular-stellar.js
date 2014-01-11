@@ -1,5 +1,5 @@
 (function(){
-  var bind, noop, element, extend, delayInFPS, $requestAnimationFrame, stellarConfig, Target, $css, stellarTarget, stellarBackgroundRatio, stellarRatio;
+  var bind, noop, element, extend, delayInFPS, $requestAnimationFrame, stellarConfig, Target, $css, $vendorPrefix, stellarTarget, stellarBackgroundRatio, stellarRatio;
   bind = angular.bind, noop = angular.noop, element = angular.element, extend = angular.extend;
   delayInFPS = 1000 / 60;
   $requestAnimationFrame = ['$window', '$log'].concat(function($window, $log){
@@ -113,18 +113,36 @@
   }());
   $css = ['$window'].concat(function($window){
     return function($element, cssprop){
-      var el;
+      var el, style;
       el = $element[0];
-      if (el.currentStyle) {
-        return el.currentStyle[cssprop];
-      } else if ($window.getComputedStyle) {
-        return $window.getComputedStyle(el)[cssprop];
+      style = el.currentStyle
+        ? el.currentStyle
+        : $window.getComputedStyle
+          ? $window.getComputedStyle(el)
+          : el.style;
+      if (cssprop) {
+        return style[cssprop];
       } else {
-        return el.style[cssprop];
+        return style;
       }
     };
   });
-  stellarTarget = ['$window', '$document', '$position', '$requestAnimationFrame', '$css', 'stellarConfig'].concat(function($window, $document, $position, $requestAnimationFrame, $css, stellarConfig){
+  $vendorPrefix = ['$css'].concat(function($css){
+    var VENDORS, name, that, prefix;
+    VENDORS = /^(moz|webkit|khtml|o|ms)(?=[A-Z])/;
+    for (name in $css(angular.element('<script></script>'))) {
+      if (that = name.match(VENDORS)) {
+        prefix = that[0];
+        break;
+      }
+    }
+    return function(cssprop){
+      return prefix + (!prefix
+        ? cssprop
+        : angular.uppercase(cssprop.charAt(0)) + "" + cssprop.slice(1));
+    };
+  });
+  stellarTarget = ['$window', '$document', '$position', '$requestAnimationFrame', '$css', '$vendorPrefix', 'stellarConfig'].concat(function($window, $document, $position, $requestAnimationFrame, $css, $vendorPrefix, stellarConfig){
     var windowTarget, documentTarget, windowScheduled, scrollProperty, updateFn, schedule;
     windowTarget = Target.window = new Target($window);
     documentTarget = Target.document = new Target($document);
@@ -163,10 +181,11 @@
     }, angular.isObject(scrollProperty)
       ? scrollProperty
       : function(){
-        var cssInt;
+        var cssInt, prefixedTransform;
         cssInt = function($element, cssprop){
           return parseInt($css($element, cssprop), 10);
         };
+        prefixedTransform = $vendorPrefix('transform');
         switch (scrollProperty) {
         case 'scroll':
           updateFn = function(timestamp){
@@ -194,7 +213,26 @@
             }
           };
         case 'transform':
-          throw Error('unimplemented');
+          return {
+            getLeft: function(){
+              var transform;
+              transform = $css(this._$element, prefixedTransform);
+              if ('none' === transform) {
+                return 0;
+              } else {
+                return -1 * parseInt(transform.match(/(-?[0-9]+)/g)[4], 10);
+              }
+            },
+            getTop: function(){
+              var transform;
+              transform = $css(this._$element, prefixedTransform);
+              if ('none' === transform) {
+                return 0;
+              } else {
+                return -1 * parseInt(transform.match(/(-?[0-9]+)/g)[5], 10);
+              }
+            }
+          };
         default:
           throw Error('unimplemented');
         }
@@ -246,13 +284,14 @@
       }
     };
   });
-  stellarRatio = ['$window', '$css', '$position', 'stellarConfig', 'stellarTarget'].concat(function($window, $css, $position, stellarConfig, stellarTarget){
+  stellarRatio = ['$window', '$css', '$vendorPrefix', '$position', 'stellarConfig', 'stellarTarget'].concat(function($window, $css, $vendorPrefix, $position, stellarConfig, stellarTarget){
     var positionProperty, horizontalScrolling, verticalScrolling, setPosition, computeIsFixed, computeRatio;
     positionProperty = stellarConfig.positionProperty, horizontalScrolling = stellarConfig.horizontalScrolling, verticalScrolling = stellarConfig.verticalScrolling;
     setPosition = angular.isFunction(positionProperty.setPosition)
       ? positionProperty.setPosition
       : function(){
-        var setTop, setLeft;
+        var prefixedTransform, setTop, setLeft;
+        prefixedTransform = $vendorPrefix('transform');
         switch (positionProperty) {
         case 'position':
           setTop = function($element, top){
@@ -263,7 +302,9 @@
           };
           break;
         case 'transform':
-          throw Error('unimplemented');
+          return function($element, left, startingLeft, top, startingTop){
+            $element.css(prefixedTransform, "translate3d(" + (left - startingLeft) + "px, " + (top - startingTop) + "px, 0)");
+          };
         default:
           throw Error('unimplemented');
         }
@@ -338,5 +379,5 @@
       }
     };
   });
-  angular.module('angular.stellar', ['ui.bootstrap.position']).constant('stellarConfig', stellarConfig).factory('$requestAnimationFrame', $requestAnimationFrame).factory('$css', $css).factory('stellarTarget', stellarTarget).directive('stellarRatio', stellarRatio).directive('stellarBackgroundRatio', stellarBackgroundRatio);
+  angular.module('angular.stellar', ['ui.bootstrap.position']).constant('stellarConfig', stellarConfig).factory('$requestAnimationFrame', $requestAnimationFrame).factory('$css', $css).factory('$vendorPrefix', $vendorPrefix).factory('stellarTarget', stellarTarget).directive('stellarRatio', stellarRatio).directive('stellarBackgroundRatio', stellarBackgroundRatio);
 }).call(this);
