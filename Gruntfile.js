@@ -40,7 +40,10 @@ module.exports = function(grunt) {
         cwd: '<%= fdr.src %>',
         src: '<%= pkg.name %>.*.ls',
         dest: '<%= fdr.tmp %>',
-        filter: 'isFile'
+        filter: 'isFile',
+        options: {
+          bare: true
+        }
       },          compile: {
         src: '<%= fdr.src %><%= pkg.name %>.js.ls',
         dest: '<%= fdr.dest %><%= pkg.name %>.js'
@@ -73,6 +76,7 @@ module.exports = function(grunt) {
           'misc/test-lib/jquery-1.10.2.min.js',
           'misc/test-lib/angular.1.2.6.min.js',
           'misc/test-lib/angular-mocks.1.2.6.min.js',
+          'misc/test-lib/position.js',
           '<%= fdr.tmp %><%= pkg.name %>.js.ls',
           '<%= fdr.tmp %><%= pkg.name %>.spec.ls'
         ],

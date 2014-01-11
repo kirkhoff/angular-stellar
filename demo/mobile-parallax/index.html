@@ -31,6 +31,7 @@
     <script src="../angular-stellar.js"></script>
     <script>
       angular.module('demo', ['angular.stellar']).config(['stellarConfig', function(stellarConfig){
+        stellarConfig.positionProperty = 'transform';
         stellarConfig.horizontalScrolling = false;
         stellarConfig.verticalOffset = 150;
         console.log(stellarConfig);
