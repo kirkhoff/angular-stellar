@@ -1,6 +1,6 @@
 {
   "name": "angular-stellar",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "AngularJS port of Stellar.js ",
   "summary": "AngularJS port of Stellar.js ",
   "main": "angular-stellar.js",
