@@ -1,6 +1,6 @@
 # angular-stellar
 
-[![Gem Version](https://badge.fury.io/rb/angular-stellar.png)](http://badge.fury.io/rb/angular-stellar) [![Build Status](https://secure.travis-ci.org/tomchentw/angular-stellar.png)](http://travis-ci.org/tomchentw/angular-stellar) [![Code Climate](https://codeclimate.com/github/tomchentw/angular-stellar.png)](https://codeclimate.com/github/tomchentw/angular-stellar)  [![Dependency Status](https://gemnasium.com/tomchentw/angular-stellar.png)](https://gemnasium.com/tomchentw/angular-stellar)
+[![Gem Version](https://badge.fury.io/rb/angular-stellar.png)](http://badge.fury.io/rb/angular-stellar) [![NPM version](https://badge.fury.io/js/angular-stellar.png)](http://badge.fury.io/js/angular-stellar) [![Build Status](https://secure.travis-ci.org/tomchentw/angular-stellar.png)](http://travis-ci.org/tomchentw/angular-stellar) [![Code Climate](https://codeclimate.com/github/tomchentw/angular-stellar.png)](https://codeclimate.com/github/tomchentw/angular-stellar)  [![Dependency Status](https://gemnasium.com/tomchentw/angular-stellar.png)](https://gemnasium.com/tomchentw/angular-stellar)
 
 Stellar.js directives for AngularJS  ( Without jQuery dependency )
 
