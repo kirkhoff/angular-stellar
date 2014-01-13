@@ -1,8 +1,8 @@
 {
   "name": "angular-stellar",
   "version": "0.2.1",
-  "description": "AngularJS port of Stellar.js ",
-  "summary": "AngularJS port of Stellar.js ",
+  "description": "Stellar.js directives for AngularJS  ( Without jQuery dependency )",
+  "summary": "Stellar.js directives for AngularJS  ( Without jQuery dependency )",
   "main": "angular-stellar.js",
   "scripts": {
     "test": "gulp test --require LiveScript",
