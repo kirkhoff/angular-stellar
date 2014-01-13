@@ -13,7 +13,7 @@ module.exports = function(config) {
       'misc/test-lib/jquery-1.10.2.min.js',
       'misc/test-lib/angular.1.2.6.min.js',
       'misc/test-lib/angular-mocks.1.2.6.min.js',
-      'misc/test-lib/position.js',
+      'misc/test-lib/position.min.js',
       'tmp/angular-stellar.js',
       'tmp/angular-stellar.spec.js'
     ],

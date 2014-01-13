@@ -1,3 +1,4 @@
+/*global angular:false*/
 const {bind, noop, extend} = angular
 const delayInFPS = 1000/60
 
@@ -48,7 +49,7 @@ class Target
     @_lastTime = timestamp
     #
     rescheduled = false
-    for _, target of @_targets when target.handleUpdate timestamp and not rescheduled
+    for _, target of @_targets when target.handleUpdate! and not rescheduled
       rescheduled = true
     rescheduled
 
@@ -71,7 +72,7 @@ class Target
     bind @_callbacks, @_callbacks.splice, index
 
   # return true if we need to reschedule $requestAnimationFrame
-  handleUpdate: !(timestamp) ->
+  handleUpdate: !->
     return unless @isPropChanged!
     [callback @_props for callback in @_callbacks]
 
