@@ -1,3 +1,12 @@
+<a name="0.2.3"></a>
+### 0.2.3 (2014-01-13)
+
+
+#### Features
+
+* **npm:** add .npmignore and add release script to npm ([4f82f576e4a3e4bb076fde619abba2e319a1bc54](git://github.com/tomchentw/angular-stellar.git/commit/4f82f576e4a3e4bb076fde619abba2e319a1bc54))
+
+
 <a name="0.2.2"></a>
 ### 0.2.2 (2014-01-13)
 

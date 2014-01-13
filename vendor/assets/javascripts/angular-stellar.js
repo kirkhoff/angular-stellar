@@ -1,4 +1,4 @@
-/*! angular-stellar - v 0.2.2 - 2014-01-13T08:28:36.220Z
+/*! angular-stellar - v 0.2.3 - 2014-01-13T09:55:46.502Z
  * https://github.com/tomchentw/angular-stellar
  * Copyright (c) 2014 [tomchentw](https://github.com/tomchentw/);
  * Licensed [MIT](http://tomchentw.mit-license.org/)
@@ -44,53 +44,47 @@
     Target.displayName = 'Target';
     var prototype = Target.prototype, constructor = Target;
     Target._lastTime = 0;
-    Target._targets = {};
+    Target._targets = [];
     Target.getInstance = function(name, $element){
-      var ref$;
-      return (ref$ = this._targets)[name] || (ref$[name] = new Target($element));
+      return Target[name] || new Target(name, $element);
     };
     Target.handleUpdate = function(timestamp){
-      var justUpdated, rescheduled, _, ref$, target;
+      var justUpdated, rescheduled, i$, ref$, len$, target;
       justUpdated = timestamp - this._lastTime < delayInFPS;
       if (justUpdated) {
         return true;
       }
       this._lastTime = timestamp;
       rescheduled = false;
-      for (_ in ref$ = this._targets) {
-        target = ref$[_];
+      for (i$ = 0, len$ = (ref$ = this._targets).length; i$ < len$; ++i$) {
+        target = ref$[i$];
         if (target.handleUpdate() && !rescheduled) {
           rescheduled = true;
         }
       }
       return rescheduled;
     };
-    function Target($element){
+    function Target(name, $element){
+      constructor[name] = this;
+      constructor._targets.push(this);
       this._$element = $element;
       this._callbacks = [];
       this._props = {};
     }
-    prototype.isPropChanged = function(){
-      var updated;
-      updated = this.getOffset();
-      updated.scrollTop = this.getTop();
-      updated.scrollLeft = this.getLeft();
-      if (angular.equals(updated, this._props)) {
-        return false;
-      }
-      extend(this._props, updated);
-      return true;
-    };
     prototype.addCallbak = function(it){
       var index;
       index = -1 + this._callbacks.push(it);
       return bind(this._callbacks, this._callbacks.splice, index);
     };
     prototype.handleUpdate = function(){
-      var i$, ref$, len$, callback;
-      if (!this.isPropChanged()) {
+      var updated, i$, ref$, len$, callback;
+      updated = this.getOffset();
+      updated.scrollTop = this.getTop();
+      updated.scrollLeft = this.getLeft();
+      if (angular.equals(updated, this._props)) {
         return;
       }
+      extend(this._props, updated);
       for (i$ = 0, len$ = (ref$ = this._callbacks).length; i$ < len$; ++i$) {
         callback = ref$[i$];
         callback(this._props);
@@ -182,15 +176,13 @@
       }
     }, angular.isObject(scrollProperty)
       ? scrollProperty
-      : function(){
+      : (function(){
         var cssInt, prefixedTransform;
         cssInt = function($element, cssprop){
           return parseInt($css($element, cssprop), 10);
         };
         prefixedTransform = $vendorPrefix('transform');
         switch (scrollProperty) {
-        case 'scroll':
-          return {};
         case 'position':
           return {
             getLeft: function(){
@@ -230,10 +222,12 @@
               }
             }
           };
+        case 'scroll':
+          // fallthrough
         default:
-          throw Error('unimplemented');
+          return {};
         }
-      }());
+      }.call(this)));
     schedule = bind(this, $requestAnimationFrame, function(timestamp){
       var reschedule;
       reschedule = Target.handleUpdate(timestamp);
@@ -249,12 +243,12 @@
       return schedule() && Target.getInstance(name, $element);
     };
   });
-  stellarBackgroundRatio = ['$window', '$position', '$css', 'stellarTarget'].concat(function($window, $position, $css, stellarTarget){
+  stellarBackgroundRatio = ['$position', '$css', 'stellarTarget'].concat(function($position, $css, stellarTarget){
     var getBackgroundPosition, computeRatio;
     getBackgroundPosition = function($element){
       var bgPos;
       bgPos = $css($element, 'backgroundPosition').split(' ');
-      return [parseInt(bgPos[0]), parseInt(bgPos[1])];
+      return [parseInt(bgPos[0], 10), parseInt(bgPos[1], 10)];
     };
     computeRatio = function($element, $attrs){
       var stellarBackgroundRatio, fixedRatioOffset;
@@ -277,7 +271,7 @@
         };
         selfProperties.bgTop = selfBgPositions[1];
         selfProperties.bgLeft = selfBgPositions[0];
-        $scope.$on('$destroy', stellarTarget('window', $window).addCallbak(function(targetProps){
+        $scope.$on('$destroy', stellarTarget('window').addCallbak(function(targetProps){
           var bgTop, bgLeft;
           bgTop = finalRatio * (targetProps.scrollTop + verticalOffset - targetProps.top - selfProperties.top + parentProperties.top - selfProperties.bgTop);
           bgLeft = finalRatio * (targetProps.scrollLeft + horizontalOffset - targetProps.left - selfProperties.left + parentProperties.left - selfProperties.bgLeft);
@@ -286,12 +280,12 @@
       }
     };
   });
-  stellarRatio = ['$window', '$css', '$vendorPrefix', '$position', 'stellarConfig', 'stellarTarget'].concat(function($window, $css, $vendorPrefix, $position, stellarConfig, stellarTarget){
+  stellarRatio = ['$css', '$vendorPrefix', '$position', 'stellarConfig', 'stellarTarget'].concat(function($css, $vendorPrefix, $position, stellarConfig, stellarTarget){
     var positionProperty, horizontalScrolling, verticalScrolling, setPosition, computeIsFixed, computeRatio;
     positionProperty = stellarConfig.positionProperty, horizontalScrolling = stellarConfig.horizontalScrolling, verticalScrolling = stellarConfig.verticalScrolling;
     setPosition = angular.isFunction(positionProperty.setPosition)
       ? positionProperty.setPosition
-      : function(){
+      : (function(){
         var prefixedTransform, setTop, setLeft;
         prefixedTransform = $vendorPrefix('transform');
         switch (positionProperty) {
@@ -307,8 +301,6 @@
           return function($element, left, startingLeft, top, startingTop){
             $element.css(prefixedTransform, "translate3d(" + (left - startingLeft) + "px, " + (top - startingTop) + "px, 0)");
           };
-        default:
-          throw Error('unimplemented');
         }
         return function($element, left, startingLeft, top, startingTop){
           if (horizontalScrolling) {
@@ -318,7 +310,7 @@
             setTop($element, top + "px", startingTop + "px");
           }
         };
-      }();
+      }.call(this));
     computeIsFixed = function($element){
       return 'fixed' === $css($element, 'position');
     };
@@ -344,7 +336,7 @@
         };
         selfProperties.positionTop = selfPositions.top;
         selfProperties.positionLeft = selfPositions.left;
-        $scope.$on('$destroy', stellarTarget('window', $window).addCallbak(function(targetProps){
+        $scope.$on('$destroy', stellarTarget('window').addCallbak(function(targetProps){
           var newTop, newOffsetTop, newLeft, newOffsetLeft, targetScrollLeft, targetScrollTop, isVisibleHorizontal, isVisibleVertical, isHidden;
           newTop = selfProperties.positionTop;
           newOffsetTop = selfProperties.top;
