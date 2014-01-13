@@ -1,8 +1,9 @@
-/*! angular-stellar - v 0.2.1 - 2014-01-13T07:45:43.816Z
+/*! angular-stellar - v 0.2.2 - 2014-01-13T08:28:36.220Z
  * https://github.com/tomchentw/angular-stellar
  * Copyright (c) 2014 [tomchentw](https://github.com/tomchentw/);
  * Licensed [MIT](http://tomchentw.mit-license.org/)
  */
+/*global angular:false*/
 (function(){
   var bind, noop, extend, delayInFPS, $requestAnimationFrame, stellarConfig, Target, $css, $vendorPrefix, stellarTarget, stellarBackgroundRatio, stellarRatio;
   bind = angular.bind, noop = angular.noop, extend = angular.extend;
@@ -58,7 +59,7 @@
       rescheduled = false;
       for (_ in ref$ = this._targets) {
         target = ref$[_];
-        if (target.handleUpdate(timestamp) && !rescheduled) {
+        if (target.handleUpdate() && !rescheduled) {
           rescheduled = true;
         }
       }
@@ -85,7 +86,7 @@
       index = -1 + this._callbacks.push(it);
       return bind(this._callbacks, this._callbacks.splice, index);
     };
-    prototype.handleUpdate = function(timestamp){
+    prototype.handleUpdate = function(){
       var i$, ref$, len$, callback;
       if (!this.isPropChanged()) {
         return;
