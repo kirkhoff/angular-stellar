@@ -1,6 +1,11 @@
+/*! angular-stellar - v 0.2.1 - 2014-01-13T07:45:43.816Z
+ * https://github.com/tomchentw/angular-stellar
+ * Copyright (c) 2014 [tomchentw](https://github.com/tomchentw/);
+ * Licensed [MIT](http://tomchentw.mit-license.org/)
+ */
 (function(){
-  var bind, noop, element, extend, delayInFPS, $requestAnimationFrame, stellarConfig, Target, $css, $vendorPrefix, stellarTarget, stellarBackgroundRatio, stellarRatio;
-  bind = angular.bind, noop = angular.noop, element = angular.element, extend = angular.extend;
+  var bind, noop, extend, delayInFPS, $requestAnimationFrame, stellarConfig, Target, $css, $vendorPrefix, stellarTarget, stellarBackgroundRatio, stellarRatio;
+  bind = angular.bind, noop = angular.noop, extend = angular.extend;
   delayInFPS = 1000 / 60;
   $requestAnimationFrame = ['$window', '$log'].concat(function($window, $log){
     var NAMES, i$, len$, name, that;
@@ -23,10 +28,7 @@
     verticalScrolling: true,
     horizontalOffset: 0,
     verticalOffset: 0,
-    responsive: false,
-    parallaxBackgrounds: true,
-    parallaxElements: true,
-    hideDistantElements: 1,
+    hideDistantElements: true,
     hideElement: function(it){
       it.addClass('ng-hide');
     },
@@ -41,25 +43,29 @@
     Target.displayName = 'Target';
     var prototype = Target.prototype, constructor = Target;
     Target._lastTime = 0;
+    Target._targets = {};
+    Target.getInstance = function(name, $element){
+      var ref$;
+      return (ref$ = this._targets)[name] || (ref$[name] = new Target($element));
+    };
     Target.handleUpdate = function(timestamp){
-      var justUpdated, rescheduled, name, target;
+      var justUpdated, rescheduled, _, ref$, target;
       justUpdated = timestamp - this._lastTime < delayInFPS;
       if (justUpdated) {
         return true;
       }
       this._lastTime = timestamp;
       rescheduled = false;
-      for (name in this) {
-        target = this[name];
-        if ((typeof target.handleUpdate === 'function' && target.handleUpdate(timestamp)) && !rescheduled) {
+      for (_ in ref$ = this._targets) {
+        target = ref$[_];
+        if (target.handleUpdate(timestamp) && !rescheduled) {
           rescheduled = true;
         }
       }
       return rescheduled;
     };
-    function Target(dom){
-      this._$element = element(
-      dom);
+    function Target($element){
+      this._$element = $element;
       this._callbacks = [];
       this._props = {};
     }
@@ -143,10 +149,9 @@
     };
   });
   stellarTarget = ['$window', '$document', '$position', '$requestAnimationFrame', '$css', '$vendorPrefix', 'stellarConfig'].concat(function($window, $document, $position, $requestAnimationFrame, $css, $vendorPrefix, stellarConfig){
-    var windowTarget, documentTarget, windowScheduled, scrollProperty, updateFn, schedule;
-    windowTarget = Target.window = new Target($window);
-    documentTarget = Target.document = new Target($document);
-    windowScheduled = false;
+    var windowTarget, documentTarget, scrollProperty, schedule;
+    windowTarget = Target.getInstance('window', angular.element($window));
+    documentTarget = Target.getInstance('document', $document);
     windowTarget.getOffset = documentTarget.getOffset = function(){
       var docEl;
       docEl = $document[0].documentElement;
@@ -170,10 +175,6 @@
       $window.scrollTo($window.pageXOffset, it);
     };
     scrollProperty = stellarConfig.scrollProperty;
-    updateFn = function(timestamp){
-      Target.handleUpdate(timestamp);
-      schedule();
-    };
     extend(Target.prototype, {
       getOffset: function(){
         return $position.offset(this._$element);
@@ -188,11 +189,6 @@
         prefixedTransform = $vendorPrefix('transform');
         switch (scrollProperty) {
         case 'scroll':
-          updateFn = function(timestamp){
-            if (Target.handleUpdate(timestamp)) {
-              schedule();
-            }
-          };
           return {};
         case 'position':
           return {
@@ -237,14 +233,19 @@
           throw Error('unimplemented');
         }
       }());
-    schedule = bind(this, $requestAnimationFrame, updateFn);
-    return function(name, $element){
-      schedule();
-      if (scrollProperty === 'scroll' && !windowScheduled) {
-        windowScheduled = true;
-        angular.element($window).on('scroll resize', schedule);
+    schedule = bind(this, $requestAnimationFrame, function(timestamp){
+      var reschedule;
+      reschedule = Target.handleUpdate(timestamp);
+      if ('scroll' === scrollProperty && !reschedule) {
+        return;
       }
-      return Target[name] || (Target[name] = new Target($element));
+      schedule();
+    });
+    if (scrollProperty === 'scroll') {
+      windowTarget._$element.on('scroll resize', schedule);
+    }
+    return function(name, $element){
+      return schedule() && Target.getInstance(name, $element);
     };
   });
   stellarBackgroundRatio = ['$window', '$position', '$css', 'stellarTarget'].concat(function($window, $position, $css, stellarTarget){

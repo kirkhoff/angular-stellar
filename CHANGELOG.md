@@ -1,3 +1,12 @@
+<a name="0.2.1"></a>
+### 0.2.1 (2014-01-13)
+
+
+#### Bug Fixes
+
+* **Target.handleUpdate:** fix refer to wrong variable bug ([77398653630fbcf09d24059ad80cf55c5f9f5422](git://github.com/tomchentw/angular-stellar.git/commit/77398653630fbcf09d24059ad80cf55c5f9f5422))
+
+
 <a name="0.2.0"></a>
 ## 0.2.0 (2014-01-13)
 
