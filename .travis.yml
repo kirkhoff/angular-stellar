@@ -1,0 +1,7 @@
+language: ruby
+rvm:
+- 2.0.0
+before_script:
+- npm install --quiet -g gulp karma protractor
+- npm install --quiet
+script: npm test
