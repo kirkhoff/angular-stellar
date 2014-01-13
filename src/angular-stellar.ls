@@ -48,7 +48,7 @@ class Target
     @_lastTime = timestamp
     #
     rescheduled = false
-    for name, @_targets of @ when target.handleUpdate timestamp and not rescheduled
+    for _, target of @_targets when target.handleUpdate timestamp and not rescheduled
       rescheduled = true
     rescheduled
 
