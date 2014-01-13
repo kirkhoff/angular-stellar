@@ -38,42 +38,40 @@ const stellarConfig = do
 
 class Target
   @_lastTime = 0
-  @_targets = {}
+  @_targets = []
 
   @getInstance = (name, $element) ->
-    @_targets[name] ||= new Target $element
+    Target[name] || new Target name, $element
 
+  # return true if we need to reschedule $requestAnimationFrame
   @handleUpdate = (timestamp) ->
     const justUpdated = timestamp - @_lastTime < delayInFPS
     return true if justUpdated
     @_lastTime = timestamp
     #
     rescheduled = false
-    for _, target of @_targets when target.handleUpdate! and not rescheduled
+    for target in @_targets when target.handleUpdate! and not rescheduled
       rescheduled = true
     rescheduled
 
-  ($element) ->
+  (name, $element) ->
+    @@[name] = @
+    @@_targets.push @
     @_$element = $element
     @_callbacks = []
     @_props = {}
-
-  isPropChanged: ->
-    const updated = @getOffset!
-    updated.scrollTop   = @getTop!
-    updated.scrollLeft  = @getLeft!
-
-    return false if angular.equals updated, @_props
-    extend @_props, updated
-    true
 
   addCallbak: ->
     const index = -1+@_callbacks.push it
     bind @_callbacks, @_callbacks.splice, index
 
-  # return true if we need to reschedule $requestAnimationFrame
   handleUpdate: !->
-    return unless @isPropChanged!
+    const updated = @getOffset!
+    updated.scrollTop   = @getTop!
+    updated.scrollLeft  = @getLeft!
+
+    return if angular.equals updated, @_props
+    extend @_props, updated
     [callback @_props for callback in @_callbacks]
 
   #
@@ -152,13 +150,11 @@ const stellarTarget = <[
   extend Target::, do
     getOffset: -> $position.offset @_$element
   , if angular.isObject scrollProperty then scrollProperty
-  else do ->
+  else let
     const cssInt = ($element, cssprop) -> parseInt $css($element, cssprop), 10
     const prefixedTransform = $vendorPrefix 'transform'
     #
     switch scrollProperty
-    | 'scroll' =>
-      {}
     | 'position' =>
       getLeft: -> -1*cssInt @_$element, 'left'
       getTop: -> -1*cssInt @_$element, 'top'
@@ -175,7 +171,8 @@ const stellarTarget = <[
         const transform = $css @_$element, prefixedTransform
         if 'none' is transform then 0
         else -1*parseInt transform.match(/(-?[0-9]+)/g).5, 10
-    | _ => ...
+    | 'scroll' => fallthrough
+    | _ => {}
   #
   const schedule = bind @, $requestAnimationFrame, !(timestamp) ->
     const reschedule = Target.handleUpdate timestamp
@@ -192,12 +189,12 @@ const stellarTarget = <[
     schedule! and Target.getInstance name, $element
 
 const stellarBackgroundRatio = <[
-       $window  $position  $css  stellarTarget
-]> ++ ($window, $position, $css, stellarTarget) ->
+       $position  $css  stellarTarget
+]> ++ ($position, $css, stellarTarget) ->
 
   const getBackgroundPosition = ($element) ->
     const bgPos = $css $element, 'backgroundPosition' .split ' '
-    [parseInt(bgPos.0), parseInt(bgPos.1)]
+    [parseInt(bgPos.0, 10), parseInt(bgPos.1, 10)]
 
   const computeRatio = ($element, $attrs) ->
     const stellarBackgroundRatio = $attrs.stellarBackgroundRatio or 1
@@ -222,7 +219,7 @@ const stellarBackgroundRatio = <[
     selfProperties.bgTop = selfBgPositions.1
     selfProperties.bgLeft = selfBgPositions.0
     #
-    stellarTarget 'window' $window
+    stellarTarget 'window'
     .addCallbak !(targetProps) ->
       const bgTop = finalRatio * do
         targetProps.scrollTop +
@@ -245,14 +242,14 @@ const stellarBackgroundRatio = <[
     |> $scope.$on '$destroy' _
 
 const stellarRatio = <[
-       $window  $css  $vendorPrefix  $position  stellarConfig  stellarTarget
-]> ++ ($window, $css, $vendorPrefix, $position, stellarConfig, stellarTarget) ->
+       $css  $vendorPrefix  $position  stellarConfig  stellarTarget
+]> ++ ($css, $vendorPrefix, $position, stellarConfig, stellarTarget) ->
 
   const {positionProperty, horizontalScrolling, verticalScrolling} = stellarConfig
 
   const setPosition = if angular.isFunction positionProperty.setPosition
     positionProperty.setPosition
-  else do ->
+  else let
     const prefixedTransform = $vendorPrefix 'transform'
     switch positionProperty
     | 'position' =>
@@ -261,7 +258,6 @@ const stellarRatio = <[
     | 'transform' =>
       return !($element, left, startingLeft, top, startingTop) ->
         $element.css prefixedTransform, "translate3d(#{ left - startingLeft }px, #{ top - startingTop }px, 0)"
-    | _ => ...
 
     !($element, left, startingLeft, top, startingTop) ->
       setLeft $element, "#{ left }px", "#{ startingLeft }px" if horizontalScrolling
@@ -294,7 +290,7 @@ const stellarRatio = <[
     selfProperties.positionTop = selfPositions.top
     selfProperties.positionLeft = selfPositions.left
     #
-    stellarTarget 'window' $window
+    stellarTarget 'window'
     .addCallbak !(targetProps) ->
       #
       newTop = selfProperties.positionTop
