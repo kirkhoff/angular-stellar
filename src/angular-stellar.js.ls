@@ -1,4 +1,4 @@
-const {bind, noop, element, extend} = angular
+const {bind, noop, extend} = angular
 const delayInFPS = 1000/60
 
 const $requestAnimationFrame = <[
@@ -15,34 +15,45 @@ const $requestAnimationFrame = <[
   -> $window.setTimeout it, delayInFPS
 
 const stellarConfig = do
+  # --- removed attributes
+  # There's no need for these in Angular's world:
+  # parallaxBackgrounds: true 
+  # parallaxElements: true
+  #
+  # Let's make it responsive by default
+  # responsive: false
+  #
+  # --- removed attributes
   scrollProperty: 'scroll'
   positionProperty: 'position'
   horizontalScrolling: true
   verticalScrolling: true
   horizontalOffset: 0
   verticalOffset: 0
-  responsive: false
-  parallaxBackgrounds: true
-  parallaxElements: true
-  hideDistantElements: 1
+  hideDistantElements: true
   hideElement: !-> it.addClass 'ng-hide'
   showElement: !-> it.removeClass 'ng-hide'
   isElementHidden: -> it.hasClass 'ng-hide'
 
 class Target
   @_lastTime = 0
+  @_targets = {}
+
+  @getInstance = (name, $element) ->
+    @_targets[name] ||= new Target $element
+
   @handleUpdate = (timestamp) ->
     const justUpdated = timestamp - @_lastTime < delayInFPS
     return true if justUpdated
     @_lastTime = timestamp
     #
     rescheduled = false
-    for name, target of @ when target.handleUpdate? timestamp and not rescheduled
+    for name, @_targets of @ when target.handleUpdate timestamp and not rescheduled
       rescheduled = true
     rescheduled
 
-  (dom) ->
-    @_$element = dom |> element
+  ($element) ->
+    @_$element = $element
     @_callbacks = []
     @_props = {}
 
@@ -118,9 +129,8 @@ const stellarTarget = <[
        $window  $document  $position  $requestAnimationFrame  $css  $vendorPrefix  stellarConfig
 ]> ++ ($window, $document, $position, $requestAnimationFrame, $css, $vendorPrefix, stellarConfig) ->
 
-  const windowTarget    = Target.window   = new Target $window
-  const documentTarget  = Target.document = new Target $document
-  windowScheduled = false
+  const windowTarget    = Target.getInstance 'window' angular.element($window)
+  const documentTarget  = Target.getInstance 'document' $document
 
   windowTarget.getOffset = documentTarget.getOffset = ->
     const docEl = $document.0.documentElement
@@ -135,18 +145,9 @@ const stellarTarget = <[
   windowTarget.setLeft = documentTarget.setLeft = !-> $window.scrollTo(it, $window.pageYOffset)
   windowTarget.setTop = documentTarget.setLeft = !-> $window.scrollTo($window.pageXOffset, it)
   #
-  #
-  #
-  const {scrollProperty} = stellarConfig
-  updateFn = !(timestamp) ->
-    #
-    # for non-scroll properties, recursive reschedule self
-    #
-    Target.handleUpdate timestamp
-    schedule!
-  #
   # configurable
   #
+  const {scrollProperty} = stellarConfig
   extend Target::, do
     getOffset: -> $position.offset @_$element
   , if angular.isObject scrollProperty then scrollProperty
@@ -156,11 +157,6 @@ const stellarTarget = <[
     #
     switch scrollProperty
     | 'scroll' =>
-      updateFn := !(timestamp) ->
-        #
-        # will be scheduled only when scroll/resize event are fired.
-        #
-        schedule! if Target.handleUpdate timestamp
       {}
     | 'position' =>
       getLeft: -> -1*cssInt @_$element, 'left'
@@ -180,16 +176,19 @@ const stellarTarget = <[
         else -1*parseInt transform.match(/(-?[0-9]+)/g).5, 10
     | _ => ...
   #
-  const schedule = bind @, $requestAnimationFrame, updateFn
+  const schedule = bind @, $requestAnimationFrame, !(timestamp) ->
+    const reschedule = Target.handleUpdate timestamp
+    return if 'scroll' is scrollProperty and not reschedule
+    # 
+    # if not triggered by 'scroll' event, reshedule everytime
+    #
+    schedule!
   #
+  if scrollProperty is 'scroll'
+    windowTarget._$element.on 'scroll resize' schedule
   #
   (name, $element) ->
-    schedule!
-    if scrollProperty is 'scroll' and not windowScheduled
-      windowScheduled := true
-      angular.element $window .on 'scroll resize' schedule
-    #
-    Target[name] ||= new Target $element
+    schedule! and Target.getInstance name, $element
 
 const stellarBackgroundRatio = <[
        $window  $position  $css  stellarTarget
