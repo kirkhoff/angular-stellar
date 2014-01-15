@@ -16,11 +16,12 @@ const getJsonFile = ->
 
 const getHeaderStream = ->
   const jsonFile = getJsonFile!
+  const date = new Date
 
   gulp-header """
-/*! angular-stellar - v #{ jsonFile.version } - {{ now }}
+/*! tomchentw-boilerplate - v #{ jsonFile.version } - #{ date }
  * #{ jsonFile.homepage }
- * Copyright (c) {{ year }} [#{ jsonFile.author.name }](#{ jsonFile.author.url });
+ * Copyright (c) #{ date.getFullYear! } [#{ jsonFile.author.name }](#{ jsonFile.author.url });
  * Licensed [#{ jsonFile.license.type }](#{ jsonFile.license.url })
  */
 """

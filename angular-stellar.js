@@ -1,9 +1,8 @@
-/*! angular-stellar - v 0.2.4 - 2014-01-15T16:48:59.957Z
+/*! tomchentw-boilerplate - v 0.2.4 - Thu Jan 16 2014 01:01:58 GMT+0800 (CST)
  * https://github.com/tomchentw/angular-stellar
  * Copyright (c) 2014 [tomchentw](https://github.com/tomchentw/);
  * Licensed [MIT](http://tomchentw.mit-license.org/)
- */
-/*global angular:false*/
+ *//*global angular:false*/
 (function(){
   var bind, noop, extend, delayInFPS, $requestAnimationFrame, stellarConfig, Target, $css, $vendorPrefix, stellarTarget, stellarBackgroundRatio, stellarRatio;
   bind = angular.bind, noop = angular.noop, extend = angular.extend;
