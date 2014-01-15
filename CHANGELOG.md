@@ -1,3 +1,12 @@
+<a name="0.2.4"></a>
+### 0.2.4 (2014-01-16)
+
+
+#### Bug Fixes
+
+* **travis:** add firefox start script ([5352f2be094e81903a9cbea20c1d402a27841c43](git://github.com/tomchentw/angular-stellar.git/commit/5352f2be094e81903a9cbea20c1d402a27841c43))
+
+
 <a name="0.2.3"></a>
 ### 0.2.3 (2014-01-13)
 
