@@ -119,7 +119,7 @@ You can have your implementation on your own.
 
 [![devDependency Status](https://david-dm.org/tomchentw/angular-stellar/dev-status.png?branch=master)](https://david-dm.org/tomchentw/angular-stellar#info=devDependencies)
 
-1. Fork it ( http://github.com/<my-github-username>/angular-stellar/fork )
+1. Fork it ( http://github.com/tomchentw/angular-stellar/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
