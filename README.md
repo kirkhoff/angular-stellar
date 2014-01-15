@@ -2,23 +2,23 @@
 
 [![Gem Version](https://badge.fury.io/rb/angular-stellar.png)](http://badge.fury.io/rb/angular-stellar) [![NPM version](https://badge.fury.io/js/angular-stellar.png)](http://badge.fury.io/js/angular-stellar) [![Build Status](https://secure.travis-ci.org/tomchentw/angular-stellar.png)](http://travis-ci.org/tomchentw/angular-stellar) [![Code Climate](https://codeclimate.com/github/tomchentw/angular-stellar.png)](https://codeclimate.com/github/tomchentw/angular-stellar)  [![Dependency Status](https://gemnasium.com/tomchentw/angular-stellar.png)](https://gemnasium.com/tomchentw/angular-stellar)
 
-Stellar.js directives for AngularJS  ( Without jQuery dependency )
+Rewrite of Stellar.js native AngularJS directives without jQuery dependency
 
 
 ## Project philosophy
-
-### Native, lightweight directives
-`Stellar.js` provides the same interface with angular `directives`.  
-We use the similarity between them and provides seamless intergration with `Stellar.js`.  
 
 ### Develop in LiveScript
 [LiveScript](http://livescript.net/) is a compile-to-js language, which provides us more robust way to write JavaScript.  
 It also has great readibility and lots of syntax sugar just like you're writting python/ruby.
 
+### Native, lightweight directives
+`Stellar.js` provides the same interface with angular `directives`.  
+We use the similarity between them and provides seamless intergration with `Stellar.js`.  
+
 
 ## Installation
 
-This project follows **DRY** principle and has two dependencies, which are `angularjs` and `ui.bootstrap.position`.  
+This project follows **DRY** principle and has two dependencies, which are `angularjs` and `ui.bootstrap.position`.
 
 ### Just use it
 
@@ -28,7 +28,6 @@ This project follows **DRY** principle and has two dependencies, which are `angu
 Then include them through script tag in your HTML.
 
 ### **Rails** projects (Only support 3.1+)
-
 Add this line to your application's Gemfile:
 ```ruby
 gem 'angular-stellar'
@@ -52,9 +51,9 @@ Then add these lines to the top of your `app/assets/javascripts/application.js` 
 
 And include in your `angular` module definition:
     
-    /* 'angular.ujs' DO depend on 'ui.bootstrap.position' module.
+    /* 'angular.stellar' DO depend on 'ui.bootstrap.position' module.
      */    
-    var module = angular.module('my-awesome-project', [/* 'bootstrap', */'angular.ujs']).
+    var module = angular.module('my-awesome-project', [/* 'bootstrap', */ 'angular.stellar']).
 
 
 ## Usage
@@ -120,7 +119,7 @@ You can have your implementation on your own.
 
 [![devDependency Status](https://david-dm.org/tomchentw/angular-stellar/dev-status.png?branch=master)](https://david-dm.org/tomchentw/angular-stellar#info=devDependencies)
 
-1. Fork it
+1. Fork it ( http://github.com/<my-github-username>/angular-stellar/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)

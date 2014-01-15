@@ -1,3 +1,17 @@
+# Created by bundle gem [NAME]
+
+### Bundler ###
+lib
+pkg
+vendor
+Gemfile
+Rakefile
+angular-stellar.gemspec
+### Bundler End ###
+
+# Created by http://gitignore.io
+
+### Node ###
 lib-cov
 *.seed
 *.log
@@ -11,21 +25,23 @@ pids
 logs
 results
 
-*.sublime*
+npm-debug.log
+node_modules
+### Node End ###
 
+# Manually Created
+
+### Bower ###
+bower_components
+bower.json
+### Bower End ###
+
+### gulp ###
 example
-demo
-lib
-misc
-pkg
 src
 test
 tmp
-vendor
-
 .travis.yml
-angular-stellar.gemspec
-angular-stellar.min.js
-Gemfile
 gulpfile.ls
-Rakefile
+angular-stellar.min.js
+### gulp end ###

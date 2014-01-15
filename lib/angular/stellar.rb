@@ -1,9 +1,9 @@
-require 'angular/stellar/package'
+require "angular/stellar/package"
 
 module Angular
   module Stellar
-    # http://prioritized.net/blog/gemify-assets-for-rails/
     class Engine < ::Rails::Engine
+    # http://prioritized.net/blog/gemify-assets-for-rails/
     end
   end
 end

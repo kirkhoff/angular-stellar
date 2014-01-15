@@ -1,0 +1,45 @@
+{
+  "name": "angular-stellar",
+  "version": "0.2.3",
+  "authors": [
+    "tomchentw <developer@tomchentw.com>"
+  ],
+  "description": "Stellar.js directives for AngularJS  ( without jQuery dependency )",
+  "main": "angular-stellar.js",
+  "keywords": [
+    "AngularJS",
+    "Stellar.js",
+    "parallax",
+    "parallax scrolling",
+    "ui.bootstrap.position",
+    "directive"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/tomchentw/angular-stellar",
+  "private": false,
+  "ignore": [
+    "**/.*",
+    "bower_components",
+    "example",
+    "lib",
+    "node_modules",
+    "pkg",
+    "src",
+    "test",
+    "tests",
+    "tmp",
+    "vendor",
+    "bower.json",
+    "Gemfile",
+    "gulpfile.ls",
+    "package.json",
+    "Rakefile",
+    "angular-stellar.gemspec"
+  ],
+  "dependencies": {
+    "jquery": "~2.0.3",
+    "angular": "~1.2.8",
+    "angular-mocks": "~1.2.8",
+    "angular-bootstrap": "~0.10.0"
+  }
+}

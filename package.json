@@ -1,8 +1,8 @@
 {
   "name": "angular-stellar",
   "version": "0.2.3",
-  "description": "Stellar.js directives for AngularJS  ( Without jQuery dependency )",
-  "summary": "Stellar.js directives for AngularJS  ( Without jQuery dependency )",
+  "description": "Stellar.js directives for AngularJS  ( without jQuery dependency )",
+  "longDescription": "Rewrite of Stellar.js native AngularJS directives without jQuery dependency",
   "main": "angular-stellar.js",
   "scripts": {
     "test": "gulp test --require LiveScript",
@@ -17,8 +17,10 @@
   "keywords": [
     "AngularJS",
     "Stellar.js",
-    "ui.bootstrap",
-    "ui.bootstrap.position"
+    "parallax",
+    "parallax scrolling",
+    "ui.bootstrap.position",
+    "directive"
   ],
   "author": {
     "name": "tomchentw",
