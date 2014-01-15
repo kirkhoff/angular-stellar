@@ -1,3 +1,12 @@
+<a name="0.2.5"></a>
+### 0.2.5 (2014-01-16)
+
+
+#### Bug Fixes
+
+* **gemspec:** add railties as runtime dependency ([ca9c5060d03f4448ed4f89326ac98e08fdbb7055](git://github.com/tomchentw/angular-stellar.git/commit/ca9c5060d03f4448ed4f89326ac98e08fdbb7055))
+
+
 <a name="0.2.4"></a>
 ### 0.2.4 (2014-01-16)
 
