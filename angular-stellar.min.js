@@ -1,4 +1,4 @@
-/*! tomchentw-boilerplate - v 0.2.5 - Thu Jan 16 2014 01:17:47 GMT+0800 (CST)
+/*! tomchentw-boilerplate - v 0.2.6 - Fri Jan 17 2014 19:05:42 GMT+0800 (CST)
  * https://github.com/tomchentw/angular-stellar
  * Copyright (c) 2014 [tomchentw](https://github.com/tomchentw/);
  * Licensed [MIT](http://tomchentw.mit-license.org/)

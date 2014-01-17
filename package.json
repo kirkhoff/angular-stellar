@@ -1,6 +1,6 @@
 {
   "name": "angular-stellar",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Stellar.js directives for AngularJS  ( without jQuery dependency )",
   "longDescription": "Rewrite of Stellar.js native AngularJS directives without jQuery dependency",
   "main": "angular-stellar.js",
