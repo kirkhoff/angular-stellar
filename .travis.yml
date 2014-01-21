@@ -8,3 +8,6 @@ before_script:
 - npm install --quiet -g bower gulp karma protractor
 - npm install --quiet
 script: npm test
+env:
+  global:
+    secure: gvuyYRFMreAdTdq27uPJ1sG8mMqc4ucTFC3PnM1M/vNAwEyYdLKIMTSJ5s8nfszkl3Ysp+4CD3L3NmF0EEsPPpaFdCngC0XfGwaaPo5L4KJ8iYZP+gWXxu3xqlW0wPXlPYFjQB27mdJDbCkZN6b20v3l39J8PJxXyX7XBHzL21Y=
